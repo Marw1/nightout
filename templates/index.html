@@ -1,0 +1,93 @@
+﻿{% extends "base.html" %}
+{% block title %}Night Out Together â€” decide where the crew drinks tonight{% endblock %}
+
+{% block body %}
+<div class="glow"></div>
+
+<header class="topbar">
+  <a class="brand" href="/">
+    <span class="brand-mark">ðŸ¸</span>
+    <span>Night Out <em>Together</em></span>
+  </a>
+  <a class="ghost-btn" href="#join">I have a code</a>
+</header>
+
+<main>
+  <section class="hero">
+    <p class="kicker">Group chat, but it actually picks a bar</p>
+    <h1>Everybody wants to go out.<br>Nobody wants to <span class="hl">choose</span>.</h1>
+    <p class="lede">
+      Start a crew, send one code to the group, and everyone drops a pin. Night Out
+      Together draws a {{ radius }} mile circle around the middle of your crew, and
+      only spots inside it can go on the list. Suggest, chat, vote, lock it in.
+    </p>
+    <div class="hero-actions">
+      <a class="primary-btn" href="#start">Start tonight's crew</a>
+      <a class="ghost-btn" href="#join">Join with a code</a>
+    </div>
+    <ul class="hero-points">
+      <li><strong>{{ radius }} mile rule</strong> No trekking across town. The radius is measured from the centre of everyone who has checked in.</li>
+      <li><strong>One code</strong> No accounts, no app store, no email. Paste the link in your group chat.</li>
+      <li><strong>A real decision</strong> Yes / maybe / no on every spot, then somebody locks it in.</li>
+    </ul>
+  </section>
+
+  <section class="how">
+    <h2>How a night comes together</h2>
+    <ol class="steps">
+      <li><span class="num">1</span><h3>Start the crew</h3><p>Name it, share your location, and you get a six character code.</p></li>
+      <li><span class="num">2</span><h3>Everyone pins in</h3><p>Friends open the link, tap their spot, and the map shows who is where.</p></li>
+      <li><span class="num">3</span><h3>Throw spots on the list</h3><p>Pin the bar, add a note. Anything over {{ radius }} miles from the centre is refused.</p></li>
+      <li><span class="num">4</span><h3>Vote and go</h3><p>Yes, maybe or no. The list re-sorts live, then one tap locks the night in.</p></li>
+    </ol>
+  </section>
+
+  <section class="forms">
+    <form class="card form-card" id="start" method="post" action="/create">
+      <h2>Start tonight's crew</h2>
+      <label>Crew name
+        <input name="group_name" maxlength="40" placeholder="Friday reunion" autocomplete="off">
+      </label>
+      <label>Your name
+        <input name="name" maxlength="30" placeholder="Sam" required autocomplete="nickname">
+      </label>
+      <label>Where you are starting from <span class="opt">optional, you can pin it later</span>
+        <input name="place" maxlength="60" placeholder="Home, the office, the station" autocomplete="off">
+      </label>
+      <input type="hidden" name="lat" id="lat"><input type="hidden" name="lng" id="lng">
+      <button type="button" class="loc-btn" id="locBtn" data-lat="lat" data-lng="lng">
+        ðŸ“ Use my current location
+      </button>
+      <p class="loc-status" id="locStatus">Your location is only used to draw the crew circle and measure distances.</p>
+      <button class="primary-btn wide" type="submit">Create the crew</button>
+    </form>
+
+    <form class="card form-card" id="join" method="post" action="/join">
+      <h2>Join a crew</h2>
+      <p class="muted">Got a code from a friend? Drop it in.</p>
+      <label>Crew code
+        <input name="code" class="code-input" maxlength="7" placeholder="ABC123" required
+               autocapitalize="characters" autocomplete="off" spellcheck="false">
+      </label>
+      <button class="primary-btn wide" type="submit">Find the crew</button>
+      <p class="muted small">Your friends' link looks like <code>/g/ABC123</code>. Either works.</p>
+    </form>
+  </section>
+
+  <section class="faq">
+    <h2>The small print, in plain words</h2>
+    <div class="faq-grid">
+      <div><h3>Why {{ radius }} miles?</h3><p>It keeps the night realistic. A cab across the city kills the mood and the budget, so any spot further than {{ radius }} miles from the crew's centre point is simply refused.</p></div>
+      <div><h3>Where is the centre?</h3><p>It is the average of everyone who has shared a location, and it moves as people check in. The map draws it, so you always see the circle you are working inside.</p></div>
+      <div><h3>Do I need an account?</h3><p>No. Your spot in the crew is remembered on your device, so keep the link handy and you can come back to the same night.</p></div>
+      <div><h3>Can we change our minds?</h3><p>Always. Votes can be undone, a locked in spot can be reopened, and new suggestions can land right up to the last minute.</p></div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>Night Out Together. Made for groups who argue about bars for two hours.</p>
+</footer>
+
+<script src="/static/app.js?v=1" defer></script>
+{% endblock %}

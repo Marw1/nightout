@@ -1,0 +1,16 @@
+﻿{% extends "base.html" %}
+{% block title %}Nothing here â€” Night Out Together{% endblock %}
+{% block body %}
+<div class="glow"></div>
+<header class="topbar">
+  <a class="brand" href="/"><span class="brand-mark">ðŸ¸</span><span>Night Out <em>Together</em></span></a>
+</header>
+<main class="narrow">
+  <section class="card form-card">
+    <p class="kicker">Error {{ status }}</p>
+    <h1>That did not work</h1>
+    <p class="muted">{{ detail }}</p>
+    <a class="primary-btn wide center-btn" href="/">Back to the start</a>
+  </section>
+</main>
+{% endblock %}

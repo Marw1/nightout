@@ -1,0 +1,122 @@
+﻿{% extends "base.html" %}
+{% block title %}{{ group.name }} â€” Night Out Together{% endblock %}
+{% block bodyclass %}app-body{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="/static/vendor/leaflet.css">
+{% endblock %}
+
+{% block body %}
+<header class="topbar app-topbar">
+  <a class="brand" href="/"><span class="brand-mark">ðŸ¸</span><span>Night Out <em>Together</em></span></a>
+  <div class="crew-id">
+    <span class="crew-name">{{ group.name }}</span>
+    <button class="code-chip copy" id="copyLink" title="Copy the invite link">{{ group.code }} Â· copy link</button>
+  </div>
+</header>
+
+<div class="decision" id="decision" hidden></div>
+
+<nav class="tabbar" id="tabbar">
+  <button data-tab="map" class="active">Map</button>
+  <button data-tab="spots">Spots</button>
+  <button data-tab="chat">Chat</button>
+  <button data-tab="crew">Crew</button>
+</nav>
+
+<main class="app-grid">
+
+  <section class="panel col-map active" data-panel="map">
+    <div class="panel-head">
+      <h2>The crew circle</h2>
+      <span class="pill" id="radiusPill">{{ radius }} mile rule</span>
+    </div>
+    <div id="map" class="map"></div>
+    <p class="map-note" id="mapNote">Blue circle: the {{ radius }} miles around the middle of the crew. Spots have to land inside it.</p>
+    <div class="my-loc">
+      <button class="ghost-btn small" id="myLocBtn">ðŸ“ Update my pin</button>
+      <button class="ghost-btn small" id="pickMeBtn">Pick my spot on the map</button>
+      <span class="muted small" id="myLocLabel"></span>
+    </div>
+  </section>
+
+  <section class="panel col-spots" data-panel="spots">
+    <div class="panel-head">
+      <h2>Tonight's shortlist</h2>
+      <button class="ghost-btn small" id="newSpotBtn"> Suggest a spot</button>
+    </div>
+
+    <form class="spot-form" id="spotForm" hidden>
+      <label>What is it called
+        <input id="spotName" maxlength="60" placeholder="The Anchor" autocomplete="off" required>
+      </label>
+      <div class="row">
+        <label>Type
+          <select id="spotKind">
+            <option value="bar">Bar</option>
+            <option value="pub">Pub</option>
+            <option value="cocktails">Cocktails</option>
+            <option value="club">Club</option>
+            <option value="food">Food first</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <label>Note <span class="opt">optional</span>
+          <input id="spotNote" maxlength="140" placeholder="Cheap pints, back garden" autocomplete="off">
+        </label>
+      </div>
+      <div class="pick-row">
+        <button type="button" class="ghost-btn small" id="spotPickBtn">Pin it on the map</button>
+        <button type="button" class="ghost-btn small" id="spotHereBtn">ðŸ“ I am standing there</button>
+      </div>
+      <p class="pin-state" id="spotPinState">No pin yet. The spot needs a location so we can check the {{ radius }} mile rule.</p>
+      <div class="row end">
+        <button type="button" class="ghost-btn small" id="spotCancel">Cancel</button>
+        <button class="primary-btn small" type="submit">Add to the list</button>
+      </div>
+    </form>
+
+    <div id="venues" class="venues"></div>
+  </section>
+
+  <section class="panel col-chat" data-panel="chat">
+    <div class="panel-head">
+      <h2>Crew chat</h2>
+      <span class="muted small" id="liveDot">live</span>
+    </div>
+    <div class="messages" id="messages"></div>
+    <form class="chat-form" id="chatForm">
+      <input id="chatInput" maxlength="400" placeholder="Where are we going then?" autocomplete="off">
+      <button class="primary-btn small" type="submit">Send</button>
+    </form>
+  </section>
+
+  <section class="panel col-crew" data-panel="crew">
+    <div class="panel-head"><h2>Who is out</h2></div>
+    <div class="plan-when">
+      <label>Meeting time
+        <input id="planWhen" maxlength="60" placeholder="Saturday, 8:30pm" autocomplete="off">
+      </label>
+      <button class="ghost-btn small" id="planSave">Save</button>
+    </div>
+    <div class="status-picker">
+      <span class="muted small">I am</span>
+      <button data-status="in">In</button>
+      <button data-status="maybe">Maybe</button>
+      <button data-status="out">Out</button>
+    </div>
+    <ul class="crew" id="crew"></ul>
+    <div class="invite">
+      <p class="muted small">Invite the rest of them:</p>
+      <input id="inviteLink" readonly>
+      <button class="ghost-btn small" id="copyLink2">Copy</button>
+    </div>
+    <button class="leave-btn" id="leaveBtn">Leave this crew</button>
+  </section>
+</main>
+
+<div class="toast" id="toast" hidden></div>
+
+<script id="bootstrap" type="application/json">{{ state_json|safe }}</script>
+<script src="/static/vendor/leaflet.js"></script>
+<script src="/static/group.js?v=1" defer></script>
+{% endblock %}
