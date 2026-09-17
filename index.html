@@ -3,13 +3,56 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>nightout | Global Night Out within 10 mile Radius Website</title>
-  <link rel="stylesheet" href="static/style.css?v=3">
+  <title>Night Out Together</title>
+  <link rel="stylesheet" href="static/style.css?v=4">
 </head>
 <body>
-  <main class="hero">
-    <h1>nightout</h1>
-    <p class="lede">Global Night Out within 10 mile Radius Website</p>
+  <div class="glow"></div>
+  <header class="topbar">
+    <a class="brand" href="index.html"><span class="brand-mark">🍸</span><span>Night Out <em>Together</em></span></a>
+    <a class="ghost-btn" href="join.html">Join with a code</a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="kicker">A tiny crew planner that works in your browser</p>
+      <h1>Everybody wants to go out.<br>Nobody wants to <span class="hl">choose</span>.</h1>
+      <p class="lede">Start a crew, share the code, and keep tonight's shortlist in one place. This GitHub Pages version stores its demo data in this browser.</p>
+      <div class="hero-actions">
+        <a class="primary-btn" href="#start">Start tonight's crew</a>
+        <a class="ghost-btn" href="join.html">Join with a code</a>
+      </div>
+    </section>
+
+    <section class="forms" id="start">
+      <form class="card form-card" id="crewForm">
+        <h2>Start tonight's crew</h2>
+        <label for="crewName">Crew name</label>
+        <input id="crewName" maxlength="40" placeholder="Friday reunion" required>
+        <label for="yourName">Your name</label>
+        <input id="yourName" maxlength="30" placeholder="Sam" required>
+        <button class="primary-btn wide" type="submit">Create the crew</button>
+      </form>
+
+      <section class="card" id="crewPanel" hidden>
+        <p class="kicker">Your browser crew</p>
+        <h2 id="crewTitle"></h2>
+        <button class="ghost-btn small" id="copyCode" type="button"></button>
+        <h3>Members</h3>
+        <ul class="crew" id="members"></ul>
+        <h3>Suggestions</h3>
+        <ul class="messages" id="ideas"></ul>
+        <form id="ideaForm">
+          <label for="idea">Add a spot or idea</label>
+          <input id="idea" maxlength="100" placeholder="The Anchor" required>
+          <button class="primary-btn small" type="submit">Add idea</button>
+        </form>
+        <button class="leave-btn" id="resetCrew" type="button">Clear this demo crew</button>
+      </section>
+    </section>
   </main>
+
+  <footer class="foot"></footer>
+  <script src="static/app.js?v=2" defer></script>
 </body>
 </html>

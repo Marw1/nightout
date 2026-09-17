@@ -30,7 +30,7 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", "/data"))
 DB_PATH = DATA_DIR / "nightout.db"
 BASE_DIR = Path(__file__).parent
 
-RADIUS_MILES = 10.0
+RADIUS_MILES = 7.0
 CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # no confusable 0/O/1/I
 
 SCHEMA = """
@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS groups (
     code          TEXT NOT NULL UNIQUE,
     name          TEXT NOT NULL,
     plan_when     TEXT NOT NULL DEFAULT '',
+    start_date    TEXT NOT NULL DEFAULT '',
+    end_date      TEXT NOT NULL DEFAULT '',
     decided_venue INTEGER,
     anchor_lat    REAL,
     anchor_lng    REAL,
@@ -53,6 +55,7 @@ CREATE TABLE IF NOT EXISTS members (
     lng         REAL,
     place       TEXT NOT NULL DEFAULT '',
     status      TEXT NOT NULL DEFAULT 'in',
+    is_admin    INTEGER NOT NULL DEFAULT 0,
     created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_seen   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -108,6 +111,19 @@ def init_db() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     with db() as conn:
         conn.executescript(SCHEMA)
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(members)")}
+        if "is_admin" not in columns:
+            conn.execute("ALTER TABLE members ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
+        group_columns = {row[1] for row in conn.execute("PRAGMA table_info(groups)")}
+        if "start_date" not in group_columns:
+            conn.execute("ALTER TABLE groups ADD COLUMN start_date TEXT NOT NULL DEFAULT ''")
+        if "end_date" not in group_columns:
+            conn.execute("ALTER TABLE groups ADD COLUMN end_date TEXT NOT NULL DEFAULT ''")
+        conn.execute(
+            "UPDATE members SET is_admin=1 WHERE id IN ("
+            "SELECT MIN(id) FROM members GROUP BY group_id HAVING SUM(is_admin)=0"
+            ")"
+        )
 
 
 @asynccontextmanager
@@ -143,6 +159,17 @@ def miles_between(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
 def clean(text: str, limit: int) -> str:
     text = re.sub(r"\s", " ", (text or "").strip())
     return text[:limit]
+
+
+def clean_date(value: str) -> str:
+    value = clean(str(value or ""), 10)
+    if not value:
+        return ""
+    try:
+        datetime.strptime(value, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(400, "Use a valid calendar date.")
+    return value
 
 
 def new_code(conn: sqlite3.Connection) -> str:
@@ -194,6 +221,12 @@ def require_member(conn, request, group) -> sqlite3.Row:
     return member
 
 
+def require_admin(member: sqlite3.Row) -> sqlite3.Row:
+    if not member["is_admin"]:
+        raise HTTPException(403, "Only the group admin can change group dates.")
+    return member
+
+
 def group_center(members) -> tuple[float | None, float | None]:
     """Centroid of every member who has shared a location."""
     pts = [(m["lat"], m["lng"]) for m in members if m["lat"] is not None]
@@ -203,9 +236,9 @@ def group_center(members) -> tuple[float | None, float | None]:
     x = y = z = 0.0
     for lat, lng in pts:
         a, b = math.radians(lat), math.radians(lng)
-        x = math.cos(a) * math.cos(b)
-        y = math.cos(a) * math.sin(b)
-        z = math.sin(a)
+        x += math.cos(a) * math.cos(b)
+        y += math.cos(a) * math.sin(b)
+        z += math.sin(a)
     n = len(pts)
     x, y, z = x / n, y / n, z / n
     lng = math.degrees(math.atan2(y, x))
@@ -214,6 +247,7 @@ def group_center(members) -> tuple[float | None, float | None]:
 
 
 def build_state(conn: sqlite3.Connection, group: sqlite3.Row, me: sqlite3.Row) -> dict:
+    can_view_locations = bool(me["is_admin"])
     members = conn.execute(
         "SELECT * FROM members WHERE group_id=? ORDER BY id", (group["id"],)
     ).fetchall()
@@ -237,6 +271,7 @@ def build_state(conn: sqlite3.Connection, group: sqlite3.Row, me: sqlite3.Row) -
 
     out_members = []
     for m in members:
+        can_see_member_location = can_view_locations or bool(m["is_admin"])
         d = None
         if m["lat"] is not None and c_lat is not None:
             d = round(miles_between(m["lat"], m["lng"], c_lat, c_lng), 1)
@@ -244,14 +279,15 @@ def build_state(conn: sqlite3.Connection, group: sqlite3.Row, me: sqlite3.Row) -
             {
                 "id": m["id"],
                 "name": m["name"],
-                "place": m["place"],
+                "place": m["place"] if can_see_member_location else "",
                 "status": m["status"],
-                "lat": m["lat"],
-                "lng": m["lng"],
-                "has_location": m["lat"] is not None,
-                "miles_from_center": d,
-                "far": (d is not None and d > RADIUS_MILES),
+                "lat": m["lat"] if can_see_member_location else None,
+                "lng": m["lng"] if can_see_member_location else None,
+                "has_location": can_see_member_location and m["lat"] is not None,
+                "miles_from_center": d if can_view_locations else None,
+                "far": can_view_locations and d is not None and d > RADIUS_MILES,
                 "is_me": m["id"] == me["id"],
+                "is_admin": bool(m["is_admin"]),
             }
         )
 
@@ -284,18 +320,18 @@ def build_state(conn: sqlite3.Connection, group: sqlite3.Row, me: sqlite3.Row) -
                 "name": v["name"],
                 "note": v["note"],
                 "kind": v["kind"],
-                "lat": v["lat"],
-                "lng": v["lng"],
+                "lat": v["lat"] if can_view_locations else None,
+                "lng": v["lng"] if can_view_locations else None,
                 "proposer": names.get(v["member_id"], "someone"),
                 "mine": v["member_id"] == me["id"],
-                "miles_from_center": centre_d,
-                "in_radius": centre_d is not None and centre_d <= RADIUS_MILES,
-                "furthest_member_miles": worst,
-                "trips": sorted(walks, key=lambda w: w["miles"]),
+                "miles_from_center": centre_d if can_view_locations else None,
+                "in_radius": (centre_d is not None and centre_d <= RADIUS_MILES) if can_view_locations else None,
+                "furthest_member_miles": worst if can_view_locations else None,
+                "trips": sorted(walks, key=lambda w: w["miles"]) if can_view_locations else [],
                 "yes": yes,
                 "maybe": maybe,
                 "no": no,
-                "score": len(yes) * 2  len(maybe) - len(no) * 2,
+                "score": len(yes) * 2 + len(maybe) - len(no) * 2,
                 "my_vote": mine,
                 "decided": group["decided_venue"] == v["id"],
             }
@@ -307,12 +343,16 @@ def build_state(conn: sqlite3.Connection, group: sqlite3.Row, me: sqlite3.Row) -
             "code": group["code"],
             "name": group["name"],
             "plan_when": group["plan_when"],
+            "start_date": group["start_date"],
+            "end_date": group["end_date"],
             "decided_venue": group["decided_venue"],
         },
         "radius_miles": RADIUS_MILES,
-        "center": {"lat": c_lat, "lng": c_lng},
-        "me": {"id": me["id"], "name": me["name"], "status": me["status"],
-               "place": me["place"], "lat": me["lat"], "lng": me["lng"]},
+         "can_view_locations": can_view_locations,
+         "center": {"lat": c_lat, "lng": c_lng} if can_view_locations else {"lat": None, "lng": None},
+        "me": {"id": me["id"], "name": me["name"], "status": me["status"], "is_admin": bool(me["is_admin"]),
+             "place": me["place"], "lat": me["lat"] if can_view_locations else None,
+             "lng": me["lng"] if can_view_locations else None},
         "members": out_members,
         "venues": out_venues,
         "messages": [
@@ -377,20 +417,27 @@ async def create(
     lat: str = Form(""),
     lng: str = Form(""),
     place: str = Form(""),
+    start_date: str = Form(""),
+    end_date: str = Form(""),
 ):
     person = clean(name, 30) or "Someone"
     crew = clean(group_name, 40) or "Tonight's crew"
     has_loc = valid_coords(lat, lng)
+    start_date = clean_date(start_date)
+    end_date = clean_date(end_date)
+    if start_date and end_date and end_date < start_date:
+        raise HTTPException(400, "The end date must be on or after the start date.")
     with db() as conn:
         code = new_code(conn)
         cur = conn.execute(
-            "INSERT INTO groups (code, name, anchor_lat, anchor_lng) VALUES (?,?,?,?)",
-            (code, crew, float(lat) if has_loc else None, float(lng) if has_loc else None),
+            "INSERT INTO groups (code, name, start_date, end_date, anchor_lat, anchor_lng) VALUES (?,?,?,?,?,?)",
+            (code, crew, start_date, end_date,
+             float(lat) if has_loc else None, float(lng) if has_loc else None),
         )
         gid = cur.lastrowid
         token = secrets.token_urlsafe(24)
         conn.execute(
-            "INSERT INTO members (group_id, token, name, lat, lng, place) VALUES (?,?,?,?,?,?)",
+            "INSERT INTO members (group_id, token, name, lat, lng, place, is_admin) VALUES (?,?,?,?,?,?,1)",
             (gid, token, person,
              float(lat) if has_loc else None, float(lng) if has_loc else None,
              clean(place, 60)),
@@ -470,7 +517,7 @@ async def join_group(
             return RedirectResponse(f"/g/{code}", status_code=303)
         token = secrets.token_urlsafe(24)
         conn.execute(
-            "INSERT INTO members (group_id, token, name, lat, lng, place) VALUES (?,?,?,?,?,?)",
+            "INSERT INTO members (group_id, token, name, lat, lng, place, is_admin) VALUES (?,?,?,?,?,?,0)",
             (group["id"], token, person,
              float(lat) if has_loc else None, float(lng) if has_loc else None,
              clean(place, 60)),
@@ -529,11 +576,19 @@ async def api_plan(request: Request, code: str):
     data = await payload(request)
     with db() as conn:
         group = get_group(conn, code)
-        me = require_member(conn, request, group)
+        me = require_admin(require_member(conn, request, group))
         when = clean(str(data.get("when", "")), 60)
-        conn.execute("UPDATE groups SET plan_when=? WHERE id=?", (when, group["id"]))
-        if when:
-            system_message(conn, group["id"], f"{me['name']} set the time: {when}")
+        start_date = clean_date(data.get("start_date", group["start_date"]))
+        end_date = clean_date(data.get("end_date", group["end_date"]))
+        if start_date and end_date and end_date < start_date:
+            raise HTTPException(400, "The end date must be on or after the start date.")
+        conn.execute(
+            "UPDATE groups SET plan_when=?, start_date=?, end_date=? WHERE id=?",
+            (when, start_date, end_date, group["id"]),
+        )
+        if when or start_date or end_date:
+            dates = f"{start_date or 'open start'} to {end_date or 'open end'}"
+            system_message(conn, group["id"], f"{me['name']} updated the plan: {dates}")
         return build_state(conn, get_group(conn, code), me)
 
 
@@ -692,6 +747,24 @@ def api_leave(request: Request, code: str):
         )
         conn.execute("DELETE FROM members WHERE id=?", (me["id"],))
     resp = JSONResponse({"ok": True})
+    resp.delete_cookie(cookie_name(code), path="/")
+    return resp
+
+
+@app.delete("/api/g/{code}")
+def api_group_delete(request: Request, code: str):
+    with db() as conn:
+        group = get_group(conn, code)
+        me = require_admin(require_member(conn, request, group))
+        conn.execute(
+            "DELETE FROM votes WHERE venue_id IN (SELECT id FROM venues WHERE group_id=?)",
+            (group["id"],),
+        )
+        conn.execute("DELETE FROM messages WHERE group_id=?", (group["id"],))
+        conn.execute("DELETE FROM venues WHERE group_id=?", (group["id"],))
+        conn.execute("DELETE FROM members WHERE group_id=?", (group["id"],))
+        conn.execute("DELETE FROM groups WHERE id=?", (group["id"],))
+    resp = JSONResponse({"ok": True, "deleted_by": me["name"]})
     resp.delete_cookie(cookie_name(code), path="/")
     return resp
 

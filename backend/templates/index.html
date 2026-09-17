@@ -54,6 +54,14 @@
       <label>Where you are starting from <span class="opt">optional, you can pin it later</span>
         <input name="place" maxlength="60" placeholder="Home, the office, the station" autocomplete="off">
       </label>
+      <div class="row">
+        <label>Start date <span class="opt">optional, open start if blank</span>
+          <input name="start_date" type="date">
+        </label>
+        <label>End date <span class="opt">optional, open end if blank</span>
+          <input name="end_date" type="date">
+        </label>
+      </div>
       <input type="hidden" name="lat" id="lat"><input type="hidden" name="lng" id="lng">
       <button type="button" class="loc-btn" id="locBtn" data-lat="lat" data-lng="lng">
         ðŸ“ Use my current location

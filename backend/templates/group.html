@@ -10,6 +10,7 @@
   <a class="brand" href="/"><span class="brand-mark">ðŸ¸</span><span>Night Out <em>Together</em></span></a>
   <div class="crew-id">
     <span class="crew-name">{{ group.name }}</span>
+    <span class="muted small">Invite code</span>
     <button class="code-chip copy" id="copyLink" title="Copy the invite link">{{ group.code }} Â· copy link</button>
   </div>
 </header>
@@ -93,6 +94,15 @@
   <section class="panel col-crew" data-panel="crew">
     <div class="panel-head"><h2>Who is out</h2></div>
     <div class="plan-when">
+      <div class="row">
+        <label>Start date
+          <input id="startDate" type="date">
+        </label>
+        <label>End date
+          <input id="endDate" type="date">
+        </label>
+      </div>
+      <p class="muted small" id="dateRangeNote">Blank dates mean open start or open end.</p>
       <label>Meeting time
         <input id="planWhen" maxlength="60" placeholder="Saturday, 8:30pm" autocomplete="off">
       </label>
@@ -111,6 +121,7 @@
       <button class="ghost-btn small" id="copyLink2">Copy</button>
     </div>
     <button class="leave-btn" id="leaveBtn">Leave this crew</button>
+    <button class="leave-btn" id="deleteGroupBtn" hidden>Delete this group</button>
   </section>
 </main>
 
@@ -118,5 +129,5 @@
 
 <script id="bootstrap" type="application/json">{{ state_json|safe }}</script>
 <script src="/static/vendor/leaflet.js"></script>
-<script src="/static/group.js?v=1" defer></script>
+<script src="/static/group.js?v=2" defer></script>
 {% endblock %}
