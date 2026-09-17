@@ -15,6 +15,8 @@ import os
 import re
 import secrets
 import sqlite3
+from urllib.parse import urlencode
+from urllib.request import Request as UrlRequest, urlopen
 from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -170,6 +172,27 @@ def clean_date(value: str) -> str:
     except ValueError:
         raise HTTPException(400, "Use a valid calendar date.")
     return value
+
+
+def reverse_address(lat: float, lng: float) -> str:
+    query = urlencode({"lat": lat, "lon": lng, "format": "jsonv2", "zoom": 18})
+    request = UrlRequest(
+        f"https://nominatim.openstreetmap.org/reverse?{query}",
+        headers={"User-Agent": "NightOutTogether/1.0"},
+    )
+    try:
+        with urlopen(request, timeout=5) as response:
+            data = json.load(response)
+    except Exception:
+        return "Address lookup unavailable. Use the map pin instead."
+    address = data.get("address", {})
+    parts = [
+        address.get("house_number"),
+        address.get("road"),
+        address.get("city") or address.get("town") or address.get("village"),
+        address.get("postcode"),
+    ]
+    return ", ".join(part for part in parts if part) or data.get("display_name", "Address unavailable.")
 
 
 def new_code(conn: sqlite3.Connection) -> str:
@@ -537,6 +560,20 @@ def api_state(request: Request, code: str):
         group = get_group(conn, code)
         me = require_member(conn, request, group)
         return build_state(conn, group, me)
+
+
+@app.get("/api/g/{code}/admin-location")
+def api_admin_location(request: Request, code: str):
+    with db() as conn:
+        group = get_group(conn, code)
+        me = require_admin(require_member(conn, request, group))
+        if me["lat"] is None or me["lng"] is None:
+            raise HTTPException(400, "Set your location before looking up your address.")
+        return {
+            "address": reverse_address(me["lat"], me["lng"]),
+            "radius_miles": RADIUS_MILES,
+            "message": "Other member locations are shown as an approximate planning window.",
+        }
 
 
 @app.post("/api/g/{code}/me")

@@ -197,6 +197,7 @@
     $('planWhen').disabled = !state.me.is_admin;
     $('planSave').disabled = !state.me.is_admin;
     $('deleteGroupBtn').hidden = !state.me.is_admin;
+    $('adminAddressBtn').hidden = !state.me.is_admin;
     $('dateRangeNote').textContent = (group.start_date || 'Open start') + ' to ' + (group.end_date || 'Open end') +
       (state.me.is_admin ? '' : '. Only the admin can change dates.');
     $('myLocLabel').textContent = state.me.lat == null ? 'No pin yet.' : 'Your pin is set' + (state.me.place ? ' (' + state.me.place + ')' : '') + '.';
@@ -274,6 +275,23 @@
   };
   $('myLocBtn').onclick = function () { locate(function (lat, lng) { request('/me', {lat: lat, lng: lng}); }); };
   $('pickMeBtn').onclick = function () { setPickMode(pickMode === 'me' ? null : 'me'); };
+  $('adminAddressBtn').onclick = function () {
+    var button = $('adminAddressBtn');
+    button.disabled = true;
+    fetch(api + '/admin-location', {headers: {Accept: 'application/json'}})
+      .then(function (response) {
+        return response.json().then(function (data) {
+          if (!response.ok) throw new Error(data.error || 'Address lookup failed.');
+          return data;
+        });
+      })
+      .then(function (data) {
+        $('adminAddress').hidden = false;
+        $('adminAddress').textContent = data.address + ' | Approximate planning window: ' + data.radius_miles + ' miles.';
+      })
+      .catch(function (error) { toast(error.message, true); })
+      .finally(function () { button.disabled = false; });
+  };
   document.querySelectorAll('.status-picker button').forEach(function (button) { button.onclick = function () { request('/me', {status: button.dataset.status}); }; });
   $('planSave').onclick = function () {
     request('/plan', {

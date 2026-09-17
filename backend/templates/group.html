@@ -36,8 +36,10 @@
     <div class="my-loc">
       <button class="ghost-btn small" id="myLocBtn">ðŸ“ Update my pin</button>
       <button class="ghost-btn small" id="pickMeBtn">Pick my spot on the map</button>
+      <button class="ghost-btn small" id="adminAddressBtn" hidden>Show my address</button>
       <span class="muted small" id="myLocLabel"></span>
     </div>
+    <p class="muted small" id="adminAddress" hidden></p>
   </section>
 
   <section class="panel col-spots" data-panel="spots">
@@ -129,5 +131,5 @@
 
 <script id="bootstrap" type="application/json">{{ state_json|safe }}</script>
 <script src="/static/vendor/leaflet.js"></script>
-<script src="/static/group.js?v=2" defer></script>
+<script src="/static/group.js?v=3" defer></script>
 {% endblock %}
