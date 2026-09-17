@@ -1,0 +1,7 @@
+﻿fastapi>=0.115
+uvicorn>=0.32
+jinja2>=3.1
+# FastAPI needs python-multipart the moment a route takes Form(...), and it
+# raises at import time if it is missing: the app never binds and the deploy
+# only reports a healthcheck timeout. The join and create forms use Form(...).
+python-multipart>=0.0.9

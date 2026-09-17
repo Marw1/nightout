@@ -20,7 +20,7 @@
       <label>Your name <span class="opt">what the crew calls you</span>
         <input name="name" maxlength="30" placeholder="Alex" required autocomplete="nickname">
       </label>
-      <label>Where you are starting from <span class="opt">optional</span>
+      <label>Where you are starting from <span class="opt">location permission required</span>
         <input name="place" maxlength="60" placeholder="Home, work, the station" autocomplete="off">
       </label>
       <input type="hidden" name="lat" id="lat"><input type="hidden" name="lng" id="lng">
@@ -28,8 +28,8 @@
         ðŸ“ Use my current location
       </button>
       <p class="loc-status" id="locStatus">
-        Sharing a pin puts you on the crew map and keeps every suggestion inside the
-        {{ radius }} mile circle. You can also drop it on the map after you are in.
+        Location permission is required to join. Your exact location is private, and
+        the app uses it to keep suggestions inside the {{ radius }} mile window.
       </p>
       <button class="primary-btn wide" type="submit">Join the crew</button>
     </form>

@@ -222,6 +222,7 @@ button.code-chip:hover{background:rgba(180,123,255,.28)}
 .venue-actions{display:flex;gap:.4rem;margin-top:.6rem;flex-wrap:wrap}
 .linky{background:none;border:0;color:var(--muted);font-size:.78rem;cursor:pointer;padding:.2rem .1rem;text-decoration:underline}
 .linky:hover{color:var(--text)}
+.location-button{display:block}
 .empty{color:var(--muted);font-size:.9rem;text-align:center;padding:1.6rem .8rem;border:1px dashed var(--line);border-radius:12px}
 
 /* chat */

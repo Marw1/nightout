@@ -51,7 +51,7 @@
       <label>Your name
         <input name="name" maxlength="30" placeholder="Sam" required autocomplete="nickname">
       </label>
-      <label>Where you are starting from <span class="opt">optional, you can pin it later</span>
+      <label>Where you are starting from <span class="opt">location permission required</span>
         <input name="place" maxlength="60" placeholder="Home, the office, the station" autocomplete="off">
       </label>
       <div class="row">
@@ -66,7 +66,7 @@
       <button type="button" class="loc-btn" id="locBtn" data-lat="lat" data-lng="lng">
         ðŸ“ Use my current location
       </button>
-      <p class="loc-status" id="locStatus">Your location is only used to draw the crew circle and measure distances.</p>
+      <p class="loc-status" id="locStatus">Allow location access so the app can place you in the private {{ radius }}-mile planning window.</p>
       <button class="primary-btn wide" type="submit">Create the crew</button>
     </form>
 

@@ -295,6 +295,8 @@ def build_state(conn: sqlite3.Connection, group: sqlite3.Row, me: sqlite3.Row) -
     out_members = []
     for m in members:
         can_see_member_location = can_view_locations or bool(m["is_admin"])
+        visible_lat = m["lat"] if can_view_locations else round(m["lat"], 2) if m["is_admin"] and m["lat"] is not None else None
+        visible_lng = m["lng"] if can_view_locations else round(m["lng"], 2) if m["is_admin"] and m["lng"] is not None else None
         d = None
         if m["lat"] is not None and c_lat is not None:
             d = round(miles_between(m["lat"], m["lng"], c_lat, c_lng), 1)
@@ -304,8 +306,8 @@ def build_state(conn: sqlite3.Connection, group: sqlite3.Row, me: sqlite3.Row) -
                 "name": m["name"],
                 "place": m["place"] if can_see_member_location else "",
                 "status": m["status"],
-                "lat": m["lat"] if can_see_member_location else None,
-                "lng": m["lng"] if can_see_member_location else None,
+                "lat": visible_lat if can_see_member_location else None,
+                "lng": visible_lng if can_see_member_location else None,
                 "has_location": can_see_member_location and m["lat"] is not None,
                 "miles_from_center": d if can_view_locations else None,
                 "far": can_view_locations and d is not None and d > RADIUS_MILES,
@@ -446,6 +448,8 @@ async def create(
     person = clean(name, 30) or "Someone"
     crew = clean(group_name, 40) or "Tonight's crew"
     has_loc = valid_coords(lat, lng)
+    if not has_loc:
+        raise HTTPException(400, "Location permission is required to create a group.")
     start_date = clean_date(start_date)
     end_date = clean_date(end_date)
     if start_date and end_date and end_date < start_date:
@@ -538,6 +542,8 @@ async def join_group(
     code = code.upper()
     person = clean(name, 30) or "Someone"
     has_loc = valid_coords(lat, lng)
+    if not has_loc:
+        raise HTTPException(400, "Location permission is required to join this group.")
     with db() as conn:
         group = get_group(conn, code)
         existing = get_member(conn, request, group)

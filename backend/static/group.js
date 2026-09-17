@@ -140,9 +140,11 @@
     $('crew').innerHTML = state.members.map(function (member) {
       var detail = member.is_admin ? (member.place ? escapeHtml(member.place) : 'admin location shared') :
         (member.place ? escapeHtml(member.place) : 'location private');
+      var canShow = member.lat != null && (state.me.is_admin || member.is_admin);
       return '<li><span class="avatar">' + escapeHtml(initials(member.name)) + '</span><span><span class="who">' +
         escapeHtml(member.name) + (member.is_admin ? ' (admin)' : '') + (member.is_me ? ' (you)' : '') +
-        '</span><span class="sub">' + detail + '</span></span><span class="tag ' + escapeHtml(member.status) + '">' +
+        '</span><span class="sub">' + detail + '</span>' + (canShow ? '<button class="linky location-button" data-show-member="' + member.id + '">Show location</button>' : '') +
+        '</span><span class="tag ' + escapeHtml(member.status) + '">' +
         escapeHtml(member.status) + '</span></li>';
     }).join('');
     document.querySelectorAll('.status-picker button').forEach(function (button) {
@@ -172,12 +174,26 @@
     document.querySelectorAll('[data-delete]').forEach(function (button) {
       button.onclick = function () { if (confirm('Remove this spot?')) request('/venue/' + button.dataset.delete, undefined, 'DELETE'); };
     });
+    document.querySelectorAll('[data-show-member]').forEach(function (button) {
+      button.onclick = function () {
+        var member = state.members.find(function (item) { return item.id === Number(button.dataset.showMember); });
+        if (!member || member.lat == null) return;
+        $('locationSummaryText').textContent = member.name + ': approximate location ' +
+          Number(member.lat).toFixed(2) + ', ' + Number(member.lng).toFixed(2) + '. Within the ' + radius + '-mile planning window.';
+      };
+    });
     renderMessages();
     updateLocationSummary();
     $('inviteLink').value = location.origin + '/g/' + code;
   }
 
   $('newSpotBtn').onclick = function () { $('spotForm').hidden = false; showTab('spots'); $('spotName').focus(); };
+  $('showAdminLocationBtn').onclick = function () {
+    var admin = state.members.find(function (member) { return member.is_admin && member.lat != null; });
+    if (!admin) { toast('The admin has not shared a location yet.', true); return; }
+    $('locationSummaryText').textContent = 'Admin approximate location: ' + Number(admin.lat).toFixed(2) + ', ' +
+      Number(admin.lng).toFixed(2) + '. The admin location is shared with the crew.';
+  };
   $('spotCancel').onclick = function () { $('spotForm').hidden = true; draft = null; updatePinState(); };
   $('spotHereBtn').onclick = function () {
     locate(function (lat, lng) { draft = {lat: lat, lng: lng}; updatePinState(); });

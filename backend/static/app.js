@@ -9,8 +9,8 @@
 
   function locate(done) {
     if (!navigator.geolocation) {
-      status.textContent = 'This browser will not share a location. You can pin yourself on the map once you are in.';
-      done();
+      status.textContent = 'Location permission is required. Enable location in your browser and try again.';
+      done(false);
       return;
     }
     btn.textContent = 'Finding you...';
@@ -22,14 +22,14 @@
         btn.textContent = 'âœ“ Location set';
         btn.classList.add('done');
         btn.disabled = false;
-        status.textContent = 'Got it. You are on the crew map.';
-        done();
+        status.textContent = 'Location set. You are inside the crew planning window.';
+        done(true);
       },
       function () {
         btn.textContent = 'ðŸ“ Use my current location';
         btn.disabled = false;
-        status.textContent = 'No location this time. Carry on, you can drop your pin on the map afterwards.';
-        done();
+        status.textContent = 'Location permission is required. Allow it in your browser and try again.';
+        done(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
@@ -40,6 +40,9 @@
     if (lat.value && lng.value || form.dataset.locationAsked) return;
     event.preventDefault();
     form.dataset.locationAsked = 'true';
-    locate(function () { form.requestSubmit(); });
+    locate(function (locationGranted) {
+      if (locationGranted) form.requestSubmit();
+      else delete form.dataset.locationAsked;
+    });
   });
 })();
