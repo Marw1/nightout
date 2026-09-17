@@ -168,9 +168,14 @@ button.code-chip:hover{background:rgba(180,123,255,.28)}
 .panel-head h2{margin:0;font-size:1.05rem}
 .pill{background:rgba(180,123,255,.16);color:var(--accent);border-radius:999px;padding:.2rem .7rem;font-size:.76rem;font-weight:700}
 
-.map{height:340px;border-radius:12px;overflow:hidden;background:var(--bg-2);border:1px solid var(--line)}
-.map.picking{cursor:crosshair;outline:2px solid var(--accent)}
 .map-note{font-size:.78rem;color:var(--muted);margin:.6rem 0 .4rem}
+.location-summary{
+  min-height:120px;display:flex;flex-direction:column;justify-content:center;gap:.45rem;
+  padding:1.2rem;border:1px solid var(--line);border-radius:12px;
+  background:linear-gradient(135deg,rgba(180,123,255,.14),rgba(79,211,155,.08));
+}
+.location-summary strong{font-size:1.2rem;color:var(--text)}
+.location-summary span{color:var(--muted);font-size:.9rem}
 .my-loc{display:flex;gap:.45rem;flex-wrap:wrap;align-items:center}
 
 .pin-badge{
@@ -264,11 +269,6 @@ button.code-chip:hover{background:rgba(180,123,255,.28)}
 }
 .toast.bad{border-color:var(--bad)}
 
-.leaflet-container{background:#101020;font:inherit}
-.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--card-2);color:var(--text)}
-.leaflet-popup-content{margin:.6rem .8rem;font-size:.85rem}
-.leaflet-control-attribution{background:rgba(10,8,20,.7)!important;color:#8e88ad!important}
-.leaflet-control-attribution a{color:#a79fd0!important}
 
 @media (max-width:1080px){
   .app-grid{grid-template-columns:1fr 1fr;grid-template-areas:"map spots" "crew spots" "chat chat"}

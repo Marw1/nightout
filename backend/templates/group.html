@@ -1,10 +1,6 @@
 ﻿{% extends "base.html" %}
 {% block title %}{{ group.name }} â€” Night Out Together{% endblock %}
 {% block bodyclass %}app-body{% endblock %}
-{% block head %}
-<link rel="stylesheet" href="/static/vendor/leaflet.css">
-{% endblock %}
-
 {% block body %}
 <header class="topbar app-topbar">
   <a class="brand" href="/"><span class="brand-mark">ðŸ¸</span><span>Night Out <em>Together</em></span></a>
@@ -18,7 +14,7 @@
 <div class="decision" id="decision" hidden></div>
 
 <nav class="tabbar" id="tabbar">
-  <button data-tab="map" class="active">Map</button>
+  <button data-tab="location" class="active">Location</button>
   <button data-tab="spots">Spots</button>
   <button data-tab="chat">Chat</button>
   <button data-tab="crew">Crew</button>
@@ -26,16 +22,18 @@
 
 <main class="app-grid">
 
-  <section class="panel col-map active" data-panel="map">
+  <section class="panel col-map active" data-panel="location">
     <div class="panel-head">
-      <h2>The crew circle</h2>
+      <h2>Location sharing</h2>
       <span class="pill" id="radiusPill">{{ radius }} mile rule</span>
     </div>
-    <div id="map" class="map"></div>
-    <p class="map-note" id="mapNote">Blue circle: the {{ radius }} miles around the middle of the crew. Spots have to land inside it.</p>
+    <div class="location-summary" id="locationSummary">
+      <strong>{{ radius }}-mile planning window</strong>
+      <span id="locationSummaryText">Location sharing is ready. The admin controls the shared location view.</span>
+    </div>
+    <p class="location-note" id="locationNote">Location details are handled privately in this group.</p>
     <div class="my-loc">
       <button class="ghost-btn small" id="myLocBtn">ðŸ“ Update my pin</button>
-      <button class="ghost-btn small" id="pickMeBtn">Pick my spot on the map</button>
       <button class="ghost-btn small" id="adminAddressBtn" hidden>Show my address</button>
       <span class="muted small" id="myLocLabel"></span>
     </div>
@@ -68,10 +66,9 @@
         </label>
       </div>
       <div class="pick-row">
-        <button type="button" class="ghost-btn small" id="spotPickBtn">Pin it on the map</button>
         <button type="button" class="ghost-btn small" id="spotHereBtn">ðŸ“ I am standing there</button>
       </div>
-      <p class="pin-state" id="spotPinState">No pin yet. The spot needs a location so we can check the {{ radius }} mile rule.</p>
+      <p class="pin-state" id="spotPinState">Use your location to check the {{ radius }} mile rule.</p>
       <div class="row end">
         <button type="button" class="ghost-btn small" id="spotCancel">Cancel</button>
         <button class="primary-btn small" type="submit">Add to the list</button>
@@ -130,6 +127,5 @@
 <div class="toast" id="toast" hidden></div>
 
 <script id="bootstrap" type="application/json">{{ state_json|safe }}</script>
-<script src="/static/vendor/leaflet.js"></script>
-<script src="/static/group.js?v=3" defer></script>
+<script src="/static/group.js?v=4" defer></script>
 {% endblock %}
