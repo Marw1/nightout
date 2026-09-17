@@ -1,0 +1,41 @@
+﻿{% extends "base.html" %}
+{% block title %}Join {{ group.name }} â€” Night Out Together{% endblock %}
+
+{% block body %}
+<div class="glow"></div>
+
+<header class="topbar">
+  <a class="brand" href="/"><span class="brand-mark">ðŸ¸</span><span>Night Out <em>Together</em></span></a>
+</header>
+
+<main class="narrow">
+  <section class="card form-card join-card">
+    <p class="kicker">You have been invited</p>
+    <h1>{{ group.name }}</h1>
+    <p class="muted">
+      Code <strong class="code-chip">{{ group.code }}</strong> Â·
+      {{ headcount }} {% if headcount == 1 %}person{% else %}people{% endif %} in so far
+    </p>
+    <form method="post" action="/g/{{ group.code }}/join">
+      <label>Your name <span class="opt">what the crew calls you</span>
+        <input name="name" maxlength="30" placeholder="Alex" required autocomplete="nickname">
+      </label>
+      <label>Where you are starting from <span class="opt">optional</span>
+        <input name="place" maxlength="60" placeholder="Home, work, the station" autocomplete="off">
+      </label>
+      <input type="hidden" name="lat" id="lat"><input type="hidden" name="lng" id="lng">
+      <button type="button" class="loc-btn" id="locBtn" data-lat="lat" data-lng="lng">
+        ðŸ“ Use my current location
+      </button>
+      <p class="loc-status" id="locStatus">
+        Sharing a pin puts you on the crew map and keeps every suggestion inside the
+        {{ radius }} mile circle. You can also drop it on the map after you are in.
+      </p>
+      <button class="primary-btn wide" type="submit">Join the crew</button>
+    </form>
+  </section>
+  <p class="muted small center">Wrong crew? <a href="/">Start your own</a>.</p>
+</main>
+
+<script src="/static/app.js?v=1" defer></script>
+{% endblock %}
