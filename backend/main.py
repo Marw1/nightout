@@ -482,6 +482,11 @@ def set_cookie(resp, code: str, token: str) -> None:
     )
 
 
+@app.get("/join")
+def join_page():
+    return RedirectResponse("/")
+
+
 @app.post("/join")
 def join_redirect(code: str = Form("")):
     code = re.sub(r"[^A-Za-z0-9]", "", code).upper()[:6]
